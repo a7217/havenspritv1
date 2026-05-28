@@ -57,6 +57,66 @@ export default function VacanciesManagement() {
   const [rowsOpen, setRowsOpen]       = useState(false);
   const [tooltipId, setTooltipId]     = useState<string | null>(null);
 
+  const emptyEdit = { title: "", department: "Government", location: "", salaryFull: "", vacancies: "", lastDate: "", experience: "", shiftTiming: "", qualification: "", description: "" };
+  const [editJob,   setEditJob]   = useState<VacancyJob | null>(null);
+  const [editForm,  setEditForm]  = useState(emptyEdit);
+  const [editError, setEditError] = useState("");
+  const [saving,    setSaving]    = useState(false);
+
+  const openEdit = (v: VacancyJob) => {
+    setEditForm({
+      title:        v.title        || "",
+      department:   v.department   || "Government",
+      location:     v.location     || "",
+      salaryFull:   v.salaryFull   || "",
+      vacancies:    String(v.vacancies ?? ""),
+      lastDate:     v.lastDate     || "",
+      experience:   "",
+      shiftTiming:  "",
+      qualification:"",
+      description:  "",
+    });
+    setEditError("");
+    setEditJob(v);
+    setTooltipId(null);
+  };
+
+  const handleEditSave = async () => {
+    if (!editJob) return;
+    if (!editForm.title.trim()) { setEditError("Job title is required."); return; }
+    setSaving(true);
+    setEditError("");
+    try {
+      const res = await fetch(`/api/jobs/${editJob._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title:        editForm.title.trim(),
+          department:   editForm.department,
+          location:     editForm.location.trim(),
+          salaryFull:   editForm.salaryFull.trim(),
+          vacancies:    Number(editForm.vacancies) || 0,
+          lastDate:     editForm.lastDate,
+          experience:   editForm.experience.trim(),
+          shiftTiming:  editForm.shiftTiming.trim(),
+          qualification:editForm.qualification.trim(),
+          description:  editForm.description.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Update failed");
+      setData((prev) => prev.map((v) => v._id === editJob._id
+        ? { ...v, title: editForm.title.trim(), department: editForm.department, location: editForm.location.trim(), salaryFull: editForm.salaryFull.trim(), vacancies: Number(editForm.vacancies) || 0, lastDate: editForm.lastDate }
+        : v
+      ));
+      setEditJob(null);
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const fetchJobs = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -135,8 +195,76 @@ export default function VacanciesManagement() {
     return nums;
   };
 
+  const efCls = "w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-[#f59e0b] focus:ring-1 focus:ring-[#f59e0b]";
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#f3f4f6]" onClick={() => { setRowsOpen(false); setTooltipId(null); }}>
+
+      {/* Edit Job Modal */}
+      {editJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditJob(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="font-bold text-[#1a2744] text-sm uppercase tracking-wide">Edit Job Vacancy</h2>
+              <button onClick={() => setEditJob(null)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Job Title *</label>
+                <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} className={efCls} placeholder="Job Title" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Department</label>
+                <select value={editForm.department} onChange={(e) => setEditForm((f) => ({ ...f, department: e.target.value }))} className={efCls}>
+                  {["Government","Education","Environmental","Communication","Infrastructure","Finance","Other"].map((d) => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Location</label>
+                <input value={editForm.location} onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))} className={efCls} placeholder="e.g. Patna, Bihar" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Salary Range (Annual)</label>
+                <input value={editForm.salaryFull} onChange={(e) => setEditForm((f) => ({ ...f, salaryFull: e.target.value }))} className={efCls} placeholder="e.g. INR 12,00,000 - 18,00,000" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Total Vacancies</label>
+                <input type="number" min={0} value={editForm.vacancies} onChange={(e) => setEditForm((f) => ({ ...f, vacancies: e.target.value }))} className={efCls} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Last Date</label>
+                <input type="date" value={editForm.lastDate} onChange={(e) => setEditForm((f) => ({ ...f, lastDate: e.target.value }))} className={efCls} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Experience Required</label>
+                <input value={editForm.experience} onChange={(e) => setEditForm((f) => ({ ...f, experience: e.target.value }))} className={efCls} placeholder="e.g. 2-5 years" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Shift Timing</label>
+                <input value={editForm.shiftTiming} onChange={(e) => setEditForm((f) => ({ ...f, shiftTiming: e.target.value }))} className={efCls} placeholder="e.g. Full-Time, 9 AM - 6 PM" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Qualification</label>
+                <input value={editForm.qualification} onChange={(e) => setEditForm((f) => ({ ...f, qualification: e.target.value }))} className={efCls} placeholder="e.g. B.Tech, Diploma" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Description</label>
+                <textarea rows={3} value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} className={`${efCls} resize-none`} placeholder="Job description..." />
+              </div>
+            </div>
+            {editError && <p className="px-6 pb-2 text-red-500 text-xs">{editError}</p>}
+            <div className="flex gap-3 px-6 pb-5">
+              <button onClick={handleEditSave} disabled={saving}
+                className="bg-[#1a2744] hover:bg-[#243560] disabled:opacity-60 text-white font-bold px-6 py-2 rounded text-xs tracking-wider transition-colors">
+                {saving ? "Saving…" : "SAVE CHANGES"}
+              </button>
+              <button onClick={() => setEditJob(null)} className="border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold px-5 py-2 rounded text-xs">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {sidebarOpen && <AdminSidebar activePage="vacancies" topButton={{ label: "POST NEW JOB", href: "/admin/post-job" }} onClose={() => setSidebarOpen(false)} />}
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
@@ -260,6 +388,11 @@ export default function VacanciesManagement() {
                             </button>
                             {tooltipId === v._id && (
                               <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow-lg z-30 min-w-[170px]">
+                                <button onClick={() => openEdit(v)}
+                                  className="block w-full text-left px-4 py-2 text-xs hover:bg-blue-50 text-blue-600 font-semibold whitespace-nowrap">
+                                  ✏️ Edit Details
+                                </button>
+                                <div className="border-t border-gray-100" />
                                 <button onClick={() => handleStatusToggle(v._id, v.isActive)}
                                   className="block w-full text-left px-4 py-2 text-xs hover:bg-gray-50 text-gray-700 font-semibold whitespace-nowrap">
                                   {v.isActive ? "Close Posting" : "Open Posting"}

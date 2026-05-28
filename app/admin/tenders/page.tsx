@@ -57,6 +57,65 @@ export default function ProjectsTendersManagement() {
   const [rowsOpen, setRowsOpen]       = useState(false);
   const [tooltipId, setTooltipId]     = useState<string | null>(null);
 
+  const emptyEditT = { projectName: "", clientDept: "NHAI", tenderRef: "", totalJobs: "", startDate: "", endDate: "", status: "ACTIVE" as Project["status"] };
+  const [editProject,  setEditProject]  = useState<Project | null>(null);
+  const [editFormT,    setEditFormT]    = useState(emptyEditT);
+  const [editCustomDept, setEditCustomDept] = useState("");
+  const [editErrorT,   setEditErrorT]   = useState("");
+  const [savingT,      setSavingT]      = useState(false);
+
+  const openEditTender = (p: Project) => {
+    const isCustom = !["NHAI","PWD","Metro","CPWD","Railways","MES","DMRC"].includes(p.clientDept);
+    setEditFormT({
+      projectName: p.projectName || "",
+      clientDept:  isCustom ? "__custom__" : p.clientDept,
+      tenderRef:   p.tenderRef  || "",
+      totalJobs:   String(p.totalJobs ?? ""),
+      startDate:   p.startDate  || "",
+      endDate:     p.endDate    || "",
+      status:      p.status     || "ACTIVE",
+    });
+    setEditCustomDept(isCustom ? p.clientDept : "");
+    setEditErrorT("");
+    setEditProject(p);
+    setTooltipId(null);
+  };
+
+  const handleEditSaveTender = async () => {
+    if (!editProject) return;
+    if (!editFormT.projectName.trim()) { setEditErrorT("Project name is required."); return; }
+    const effectiveDept = editFormT.clientDept === "__custom__" ? editCustomDept.trim() : editFormT.clientDept;
+    if (!effectiveDept) { setEditErrorT("Client department is required."); return; }
+    setSavingT(true);
+    setEditErrorT("");
+    try {
+      const res = await fetch(`/api/tenders/${editProject._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectName: editFormT.projectName.trim(),
+          clientDept:  effectiveDept,
+          tenderRef:   editFormT.tenderRef.trim(),
+          totalJobs:   Number(editFormT.totalJobs) || 0,
+          startDate:   editFormT.startDate,
+          endDate:     editFormT.endDate,
+          status:      editFormT.status,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Update failed");
+      setData((prev) => prev.map((t) => t._id === editProject._id
+        ? { ...t, projectName: editFormT.projectName.trim(), clientDept: effectiveDept, tenderRef: editFormT.tenderRef.trim(), totalJobs: Number(editFormT.totalJobs) || 0, startDate: editFormT.startDate, endDate: editFormT.endDate, status: editFormT.status }
+        : t
+      ));
+      setEditProject(null);
+    } catch (e) {
+      setEditErrorT(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setSavingT(false);
+    }
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -183,8 +242,72 @@ export default function ProjectsTendersManagement() {
 
   const inputCls = "w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-[#f59e0b] focus:ring-1 focus:ring-[#f59e0b]";
 
+  const efCls = "w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-[#f59e0b] focus:ring-1 focus:ring-[#f59e0b]";
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#f3f4f6]" onClick={() => { setBatchOpen(false); setRowsOpen(false); setTooltipId(null); }}>
+
+      {/* Edit Tender Modal */}
+      {editProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditProject(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="font-bold text-[#1a2744] text-sm uppercase tracking-wide">Edit Project / Tender</h2>
+              <button onClick={() => setEditProject(null)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Project Name *</label>
+                <input value={editFormT.projectName} onChange={(e) => setEditFormT((f) => ({ ...f, projectName: e.target.value }))} className={efCls} placeholder="e.g. NHAI Highway Phase-5" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Client Department</label>
+                <select value={editFormT.clientDept} onChange={(e) => { setEditFormT((f) => ({ ...f, clientDept: e.target.value })); if (e.target.value !== "__custom__") setEditCustomDept(""); }} className={efCls}>
+                  {["NHAI","PWD","Metro","CPWD","Railways","MES","DMRC"].map((d) => <option key={d}>{d}</option>)}
+                  <option value="__custom__">✏️ Other (Custom)</option>
+                </select>
+                {editFormT.clientDept === "__custom__" && (
+                  <input type="text" placeholder="Department naam type karo..." value={editCustomDept} onChange={(e) => setEditCustomDept(e.target.value)} className={`${efCls} mt-2`} autoFocus />
+                )}
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Tender Ref #</label>
+                <input value={editFormT.tenderRef} onChange={(e) => setEditFormT((f) => ({ ...f, tenderRef: e.target.value }))} className={efCls} placeholder="e.g. 22708100" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Total Jobs</label>
+                <input type="number" min={0} value={editFormT.totalJobs} onChange={(e) => setEditFormT((f) => ({ ...f, totalJobs: e.target.value }))} className={efCls} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Status</label>
+                <select value={editFormT.status} onChange={(e) => setEditFormT((f) => ({ ...f, status: e.target.value as Project["status"] }))} className={efCls}>
+                  <option value="ACTIVE">Active</option>
+                  <option value="CLOSED">Closed</option>
+                  <option value="ARCHIVED">Archived</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Start Date</label>
+                <input type="date" value={editFormT.startDate} onChange={(e) => setEditFormT((f) => ({ ...f, startDate: e.target.value }))} className={efCls} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">End Date</label>
+                <input type="date" value={editFormT.endDate} onChange={(e) => setEditFormT((f) => ({ ...f, endDate: e.target.value }))} className={efCls} />
+              </div>
+            </div>
+            {editErrorT && <p className="px-6 pb-2 text-red-500 text-xs">{editErrorT}</p>}
+            <div className="flex gap-3 px-6 pb-5">
+              <button onClick={handleEditSaveTender} disabled={savingT}
+                className="bg-[#1a2744] hover:bg-[#243560] disabled:opacity-60 text-white font-bold px-6 py-2 rounded text-xs tracking-wider transition-colors">
+                {savingT ? "Saving…" : "SAVE CHANGES"}
+              </button>
+              <button onClick={() => setEditProject(null)} className="border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold px-5 py-2 rounded text-xs">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {sidebarOpen && <AdminSidebar activePage="tenders" topButton={{ label: "CREATE NEW PROJECT", href: "#" }} onClose={() => setSidebarOpen(false)} />}
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
@@ -412,7 +535,12 @@ export default function ProjectsTendersManagement() {
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
                             </button>
                             {tooltipId === p._id && (
-                              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow-lg z-30 min-w-[140px]">
+                              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow-lg z-30 min-w-[150px]">
+                                <button onClick={() => openEditTender(p)}
+                                  className="block w-full text-left px-4 py-2 text-xs hover:bg-blue-50 text-blue-600 font-semibold">
+                                  ✏️ Edit Details
+                                </button>
+                                <div className="border-t border-gray-100" />
                                 <button onClick={async () => {
                                   await fetch(`/api/tenders/${p._id}`, {
                                     method: "PATCH",
