@@ -20,6 +20,9 @@ export interface IApplication extends Document {
   resumeUrl: string;
   idProofUrl: string;
   photoUrl: string;
+  additionalCertificate: string;
+  preferredDistrict: string;
+  preferredBlocks: string[];
   applicationStatus: "PENDING" | "SHORTLISTED" | "SELECTED" | "REJECTED";
   submissionDate: Date;
 }
@@ -42,9 +45,12 @@ const ApplicationSchema = new Schema<IApplication>(
     qualification: { type: String, default: "" },
     experience:    { type: Number, default: 0 },
     employer:      { type: String, default: "" },
-    resumeUrl:     { type: String, default: "" },
-    idProofUrl:    { type: String, default: "" },
-    photoUrl:      { type: String, default: "" },
+    resumeUrl:             { type: String, default: "" },
+    idProofUrl:            { type: String, default: "" },
+    photoUrl:              { type: String, default: "" },
+    additionalCertificate: { type: String, default: "" },
+    preferredDistrict:     { type: String, default: "" },
+    preferredBlocks:       { type: [String], default: [] },
     applicationStatus: {
       type: String,
       enum: ["PENDING", "SHORTLISTED", "SELECTED", "REJECTED"],

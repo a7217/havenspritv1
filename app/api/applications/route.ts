@@ -103,9 +103,14 @@ export async function POST(req: NextRequest) {
       qualification: body.qualification || "",
       experience:    Math.max(0, Number(body.experience) || 0),
       employer:      body.employer?.trim() || "",
-      resumeUrl:     body.resumeUrl     || "",
-      idProofUrl:    body.idProofUrl    || "",
-      photoUrl:      body.photoUrl      || "",
+      resumeUrl:              body.resumeUrl              || "",
+      idProofUrl:             body.idProofUrl             || "",
+      photoUrl:               body.photoUrl               || "",
+      additionalCertificate:  body.additionalCertificate?.trim() || "",
+      preferredDistrict:      body.preferredDistrict?.trim()     || "",
+      preferredBlocks:        Array.isArray(body.preferredBlocks)
+        ? body.preferredBlocks.map((b: string) => b?.trim()).filter(Boolean)
+        : [],
     });
 
     return NextResponse.json({ success: true, data: application }, { status: 201 });

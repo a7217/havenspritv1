@@ -109,9 +109,11 @@ export default function ApplyPage() {
     fullName: "", fatherName: "", mobile: "", email: "",
     dob: "", aadhaar: "", address: "", state: "",
     city: "", pinCode: "", qualification: "", experience: "0", employer: "",
+    additionalCertificate: "", preferredDistrict: "",
   };
 
   const [form, setForm] = useState(emptyForm);
+  const [preferredBlocks, setPreferredBlocks] = useState(["", "", "", "", ""]);
 
   const [resume,  setResume]  = useState<FileState>({ file: null, dragging: false });
   const [idProof, setIdProof] = useState<FileState>({ file: null, dragging: false });
@@ -155,20 +157,26 @@ export default function ApplyPage() {
     }
   };
 
+  const isEducation = !!(job && job.department?.toLowerCase().includes("education"));
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY + "_" + rawId);
-      if (saved) setForm(JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.form) setForm(parsed.form);
+        if (parsed.preferredBlocks) setPreferredBlocks(parsed.preferredBlocks);
+      }
     } catch { /* ignore */ }
   }, [rawId]);
 
   const saveDraft = useCallback(() => {
     try {
-      localStorage.setItem(DRAFT_KEY + "_" + rawId, JSON.stringify(form));
+      localStorage.setItem(DRAFT_KEY + "_" + rawId, JSON.stringify({ form, preferredBlocks }));
       setDraftSaved(true);
       setTimeout(() => setDraftSaved(false), 2000);
     } catch { /* ignore */ }
-  }, [form, rawId]);
+  }, [form, preferredBlocks, rawId]);
 
   const handleDrop = (e: React.DragEvent, setter: React.Dispatch<React.SetStateAction<FileState>>) => {
     e.preventDefault();
@@ -190,6 +198,11 @@ export default function ApplyPage() {
     }
     if (step === 1) {
       if (!form.qualification) { setStepError("Please select your highest qualification."); return false; }
+      if (isEducation) {
+        if (!form.experience || form.experience === "0") { setStepError("Please select your experience."); return false; }
+        if (!form.preferredDistrict.trim()) { setStepError("Preferred Job Location (District Name) is required."); return false; }
+        if (!preferredBlocks[0].trim()) { setStepError("At least one Preferred Block Name is required."); return false; }
+      }
     }
     return true;
   };
@@ -234,6 +247,9 @@ export default function ApplyPage() {
           resumeUrl,
           idProofUrl,
           photoUrl,
+          additionalCertificate: form.additionalCertificate || "",
+          preferredDistrict:     form.preferredDistrict     || "",
+          preferredBlocks:       preferredBlocks.filter((b) => b.trim()),
         }),
       });
 
@@ -494,8 +510,14 @@ export default function ApplyPage() {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Residential Address</label>
-                <textarea value={form.address} onChange={(e) => set("address", e.target.value)} rows={3} placeholder="Full residential address" className={`${inputCls} resize-none`} />
+                <label className={labelCls}>{isEducation ? "Full Address" : "Residential Address"}</label>
+                <textarea
+                  value={form.address}
+                  onChange={(e) => set("address", e.target.value)}
+                  rows={3}
+                  placeholder={isEducation ? "Village/Town, Post Office, PIN Code..." : "Full residential address"}
+                  className={`${inputCls} resize-none`}
+                />
               </div>
             </div>
           )}
@@ -514,21 +536,103 @@ export default function ApplyPage() {
                   ))}
                 </select>
               </div>
+
+              {isEducation ? (
+                <div>
+                  <label className={labelCls}>Additional Certificate (if any)</label>
+                  <input
+                    value={form.additionalCertificate}
+                    onChange={(e) => set("additionalCertificate", e.target.value)}
+                    placeholder="e.g. CCC, DCA, Tally, etc."
+                    className={inputCls}
+                  />
+                </div>
+              ) : null}
+
               <div>
-                <label className={labelCls}>Total Experience (Years)</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={40}
-                  value={form.experience}
-                  onChange={(e) => set("experience", e.target.value)}
-                  className={inputCls}
-                />
+                {isEducation ? (
+                  <>
+                    <label className={labelCls}>Experience *</label>
+                    <select
+                      value={form.experience}
+                      onChange={(e) => set("experience", e.target.value)}
+                      className={inputCls}
+                    >
+                      <option value="">-- Select --</option>
+                      <option value="0">Fresher (No Experience)</option>
+                      <option value="1">1 Year</option>
+                      <option value="2">2 Years</option>
+                      <option value="3">3 Years</option>
+                      <option value="4">4 Years</option>
+                      <option value="5">5 Years</option>
+                      <option value="6">6–8 Years</option>
+                      <option value="9">9–10 Years</option>
+                      <option value="11">More than 10 Years</option>
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    <label className={labelCls}>Total Experience (Years)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={40}
+                      value={form.experience}
+                      onChange={(e) => set("experience", e.target.value)}
+                      className={inputCls}
+                    />
+                  </>
+                )}
               </div>
-              <div>
-                <label className={labelCls}>Current / Last Employer</label>
-                <input value={form.employer} onChange={(e) => set("employer", e.target.value)} placeholder="Company / Organisation Name" className={inputCls} />
-              </div>
+
+              {isEducation ? (
+                <>
+                  <div>
+                    <label className={labelCls}>Preferred Job Location (District Name) *</label>
+                    <input
+                      value={form.preferredDistrict}
+                      onChange={(e) => set("preferredDistrict", e.target.value)}
+                      placeholder="Enter your preferred district name e.g. Patna"
+                      className={inputCls}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>
+                      Preferred Block Names{" "}
+                      <span className="font-normal text-gray-500">(Minimum 1, Maximum 5) *</span>
+                    </label>
+                    <div className="space-y-2">
+                      {preferredBlocks.map((val, idx) => (
+                        <input
+                          key={idx}
+                          value={val}
+                          onChange={(e) => {
+                            const updated = [...preferredBlocks];
+                            updated[idx] = e.target.value;
+                            setPreferredBlocks(updated);
+                          }}
+                          placeholder={idx === 0 ? "Block 1 *" : `Block ${idx + 1} (optional)`}
+                          className={inputCls}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1">Enter the block names where you want to work.</p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className={labelCls}>Current / Last Employer</label>
+                  <input value={form.employer} onChange={(e) => set("employer", e.target.value)} placeholder="Company / Organisation Name" className={inputCls} />
+                </div>
+              )}
+
+              {isEducation && (
+                <div>
+                  <label className={labelCls}>Current / Last Employer</label>
+                  <input value={form.employer} onChange={(e) => set("employer", e.target.value)} placeholder="Company / Organisation Name" className={inputCls} />
+                </div>
+              )}
             </div>
           )}
 
