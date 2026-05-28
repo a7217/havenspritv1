@@ -383,7 +383,7 @@ export default function JobsPage() {
                     <div className="mt-3 text-xs text-gray-700 space-y-1">
                       <p><span className="font-semibold">Salary:</span> {formatMonthly(job.salaryFull || job.salary || "")}</p>
                       <p><span className="font-semibold">Experience:</span> {job.experience || "—"}</p>
-                      <p><span className="font-semibold">Vacancies:</span> {job.vacancies}</p>
+                      {(job.vacancies > 0) && <p><span className="font-semibold">Vacancies:</span> {job.vacancies}</p>}
                       <p><span className="font-semibold">Last Date:</span> {job.lastDate || "—"}</p>
                     </div>
                     <div className="flex gap-2 mt-3 mb-3">

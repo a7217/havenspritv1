@@ -367,7 +367,7 @@ export default function VacanciesManagement() {
                       <td className="px-3 py-2.5 text-gray-600 max-w-[150px] truncate">{v.project}</td>
                       <td className="px-3 py-2.5 text-gray-600">{v.department}</td>
                       <td className="px-3 py-2.5 text-gray-600">{v.location}</td>
-                      <td className="px-3 py-2.5 text-gray-700 text-center font-semibold">{v.vacancies}</td>
+                      <td className="px-3 py-2.5 text-gray-700 text-center font-semibold">{v.vacancies > 0 ? v.vacancies : "—"}</td>
                       <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap">{formatMonthly(v.salaryFull || "")}</td>
                       <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap">{v.lastDate || "—"}</td>
                       <td className="px-3 py-2.5">

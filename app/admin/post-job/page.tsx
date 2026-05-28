@@ -92,7 +92,6 @@ export default function PostNewJob() {
     if (!form.title.trim())         e.title        = "Job title is required";
     if (!form.salaryFull.trim())    e.salaryFull   = "Salary range is required";
     if (!form.experience.trim())    e.experience   = "Experience is required";
-    if (!form.vacancies.trim())     e.vacancies    = "Number of vacancies is required";
     if (!form.lastDate.trim())      e.lastDate     = "Last date is required";
     if (!form.qualification.trim()) e.qualification = "Qualification is required";
     if (!form.description.trim())   e.description  = "Description is required";
@@ -122,7 +121,7 @@ export default function PostNewJob() {
           location:        effectiveLoc,
           salaryFull:      form.salaryFull,
           experience:      form.experience,
-          vacancies:       parseInt(form.vacancies) || 1,
+          vacancies:       parseInt(form.vacancies) || 0,
           lastDate:        new Date(form.lastDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
           shiftTiming:     form.shiftTiming || "Full-Time, 9 AM - 6 PM",
           department:      effectiveDept,
@@ -276,8 +275,8 @@ export default function PostNewJob() {
                   <input type="text" placeholder="e.g. 5-10 years" value={form.experience}
                     onChange={(e) => updateField("experience", e.target.value)} className={inputCls(errors.experience)} />
                 </Field>
-                <Field label="Number of Vacancies *" error={errors.vacancies}>
-                  <input type="number" placeholder="e.g. 5" min={1} value={form.vacancies}
+                <Field label="Number of Vacancies (optional)" error={errors.vacancies}>
+                  <input type="number" placeholder="e.g. 5 (leave blank if not applicable)" min={0} value={form.vacancies}
                     onChange={(e) => updateField("vacancies", e.target.value)} className={inputCls(errors.vacancies)} />
                 </Field>
                 <Field label="Last Date to Apply *" error={errors.lastDate}>
