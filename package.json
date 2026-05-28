@@ -1,0 +1,32 @@
+{
+  "name": "govt-tender",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 5000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@types/nodemailer": "^8.0.0",
+    "cloudinary": "^2.10.0",
+    "mongoose": "^9.6.2",
+    "next": "16.2.6",
+    "nodemailer": "^8.0.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-simple-maps": "^3.0.0",
+    "recharts": "^3.8.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
