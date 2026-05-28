@@ -4,6 +4,19 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 
+function formatMonthly(salaryFull: string): string {
+  if (!salaryFull) return "—";
+  const amounts = [...salaryFull.matchAll(/(\d+),(\d{2}),(\d{3})/g)];
+  if (amounts.length > 0) {
+    const monthly = amounts.map((m) => Math.round((parseInt(m[1]) * 100000 + parseInt(m[2]) * 1000 + parseInt(m[3])) / 12));
+    const fmt = (n: number) => "₹" + n.toLocaleString("en-IN");
+    return monthly.length >= 2 ? `${fmt(monthly[0])} – ${fmt(monthly[1])}/month` : `${fmt(monthly[0])}/month`;
+  }
+  const lakh = salaryFull.match(/(\d+)\s*(?:lakh|lac|L)/i);
+  if (lakh) return "₹" + Math.round(parseInt(lakh[1]) * 100000 / 12).toLocaleString("en-IN") + "/month";
+  return salaryFull;
+}
+
 type VacancyJob = {
   _id: string;
   title: string;
@@ -231,7 +244,7 @@ export default function VacanciesManagement() {
                       <td className="px-3 py-2.5 text-gray-600">{v.department}</td>
                       <td className="px-3 py-2.5 text-gray-600">{v.location}</td>
                       <td className="px-3 py-2.5 text-gray-700 text-center font-semibold">{v.vacancies}</td>
-                      <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap">{v.salaryFull || "—"}</td>
+                      <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap">{formatMonthly(v.salaryFull || "")}</td>
                       <td className="px-3 py-2.5 text-gray-600 whitespace-nowrap">{v.lastDate || "—"}</td>
                       <td className="px-3 py-2.5">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${STATUS_COLORS[v.isActive ? "OPEN" : "CLOSED"]}`}>
