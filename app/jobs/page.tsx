@@ -26,7 +26,6 @@ type Job = {
   isNew?: boolean;
 };
 
-const departments = ["Environmental", "Government", "Communication"];
 const JOBS_PER_PAGE = 8;
 
 const EXPERIENCE_OPTIONS = [
@@ -87,8 +86,8 @@ function getJobId(job: Job): string {
 export default function JobsPage() {
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
-  const [project, setProject] = useState("");
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
   const [selectedExpOptions, setSelectedExpOptions] = useState<number[]>([]);
   const [salaryFilter, setSalaryFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -101,11 +100,20 @@ export default function JobsPage() {
   useEffect(() => {
     fetch("/api/jobs/public")
       .then((r) => r.json())
-      .then((d) => {
-        if (d.success) setJobs(d.data);
-      })
+      .then((d) => { if (d.success) setJobs(d.data); })
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/departments?type=job")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) {
+          setDepartments(d.data.map((dept: { name: string }) => dept.name));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const toggleDept = (dept: string) => {
@@ -125,7 +133,6 @@ export default function JobsPage() {
   const filtered = jobs.filter((job) => {
     const matchSearch = search === "" || job.title.toLowerCase().includes(search.toLowerCase());
     const matchLocation = location === "" || job.location.toLowerCase().includes(location.toLowerCase());
-    const matchProject = project === "" || job.project.toLowerCase().includes(project.toLowerCase());
     const matchDept = selectedDepts.length === 0 || selectedDepts.includes(job.department);
 
     const matchExp = selectedExpOptions.length === 0 || (() => {
@@ -147,7 +154,7 @@ export default function JobsPage() {
       return true;
     })();
 
-    return matchSearch && matchLocation && matchProject && matchDept && matchExp && matchSalary && matchDate;
+    return matchSearch && matchLocation && matchDept && matchExp && matchSalary && matchDate;
   });
 
   const totalPages = Math.ceil(filtered.length / JOBS_PER_PAGE);
@@ -162,7 +169,9 @@ export default function JobsPage() {
       <div className="bg-white rounded shadow overflow-hidden">
         <div className="bg-[#1a2744] text-white text-sm font-semibold px-3 py-2.5">By Department</div>
         <div className="p-4 space-y-1">
-          {departments.map((dept) => (
+          {departments.length === 0 ? (
+            <p className="text-xs text-gray-400 italic">Loading departments…</p>
+          ) : departments.map((dept) => (
             <label key={dept} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer py-1">
               <input
                 type="checkbox"
@@ -279,21 +288,24 @@ export default function JobsPage() {
               value={location}
               onChange={(e) => { setLocation(e.target.value); setPage(1); }}
             >
-              <option value="">Location</option>
+              <option value="">All Locations</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Patna">Patna</option>
               <option value="Delhi">Delhi</option>
-              <option value="Noida">Noida</option>
               <option value="Mumbai">Mumbai</option>
-              <option value="Phase-4">Highway Phase-4</option>
             </select>
             <select
               className="bg-white text-gray-600 px-3 py-3 rounded-lg outline-none w-full"
-              value={project}
-              onChange={(e) => { setProject(e.target.value); setPage(1); }}
+              value={selectedDepts[0] || ""}
+              onChange={(e) => {
+                setSelectedDepts(e.target.value ? [e.target.value] : []);
+                setPage(1);
+              }}
             >
-              <option value="">Project/Tender</option>
-              <option value="NHAI">NHAI</option>
-              <option value="Metro">Metro</option>
-              <option value="PWD">PWD</option>
+              <option value="">All Departments</option>
+              {departments.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
             </select>
           </div>
         </div>
