@@ -55,7 +55,6 @@ export default function ProjectsTendersManagement() {
   const [selected, setSelected]       = useState<string[]>([]);
   const [batchOpen, setBatchOpen]     = useState(false);
   const [rowsOpen, setRowsOpen]       = useState(false);
-  const [tooltipId, setTooltipId]     = useState<string | null>(null);
 
   const emptyEditT = { projectName: "", clientDept: "NHAI", tenderRef: "", totalJobs: "", startDate: "", endDate: "", status: "ACTIVE" as Project["status"] };
   const [editProject,  setEditProject]  = useState<Project | null>(null);
@@ -79,7 +78,6 @@ export default function ProjectsTendersManagement() {
     setEditCustomDept(isCustom ? p.clientDept : "");
     setEditErrorT("");
     setEditProject(p);
-    setTooltipId(null);
   };
 
   const handleEditSaveTender = async () => {
@@ -254,7 +252,7 @@ export default function ProjectsTendersManagement() {
   const efCls = "w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-[#f59e0b] focus:ring-1 focus:ring-[#f59e0b]";
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f3f4f6]" onClick={() => { setBatchOpen(false); setRowsOpen(false); setTooltipId(null); }}>
+    <div className="flex h-screen overflow-hidden bg-[#f3f4f6]" onClick={() => { setBatchOpen(false); setRowsOpen(false); }}>
 
       {/* Edit Tender Modal */}
       {editProject && (
@@ -533,44 +531,42 @@ export default function ProjectsTendersManagement() {
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${STATUS_COLORS[p.status]}`}>{p.status}</span>
                       </td>
                       <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-2 relative">
-                          <div className="relative">
-                            <button onClick={() => setTooltipId(tooltipId === p._id ? null : p._id)}
-                              title="Actions" className="text-gray-400 hover:text-[#1a2744] transition-colors">
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" /></svg>
-                            </button>
-                            {tooltipId === p._id && (
-                              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow-lg z-30 min-w-[150px]">
-                                <button onClick={() => openEditTender(p)}
-                                  className="block w-full text-left px-4 py-2 text-xs hover:bg-blue-50 text-blue-600 font-semibold">
-                                  ✏️ Edit Details
-                                </button>
-                                <div className="border-t border-gray-100" />
-                                <button onClick={async () => {
-                                  await fetch(`/api/tenders/${p._id}`, {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ status: p.status === "ACTIVE" ? "CLOSED" : "ACTIVE" }),
-                                  });
-                                  setData((prev) => prev.map((t) => t._id === p._id ? { ...t, status: t.status === "ACTIVE" ? "CLOSED" : "ACTIVE" } : t));
-                                  setTooltipId(null);
-                                }} className="block w-full text-left px-4 py-2 text-xs hover:bg-gray-50 text-gray-700 font-semibold">
-                                  {p.status === "ACTIVE" ? "Mark Closed" : "Mark Active"}
-                                </button>
-                                <button onClick={async () => {
-                                  await fetch(`/api/tenders/${p._id}`, {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ status: "ARCHIVED" }),
-                                  });
-                                  setData((prev) => prev.map((t) => t._id === p._id ? { ...t, status: "ARCHIVED" } : t));
-                                  setTooltipId(null);
-                                }} className="block w-full text-left px-4 py-2 text-xs hover:bg-gray-50 text-gray-700 font-semibold">Archive</button>
-                              </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => openEditTender(p)}
+                            title="Edit"
+                            className="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold px-2.5 py-1.5 rounded text-[10px] transition-colors border border-blue-200"
+                          >
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                            Edit
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const next = p.status === "ACTIVE" ? "CLOSED" : "ACTIVE";
+                              await fetch(`/api/tenders/${p._id}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ status: next }),
+                              });
+                              setData((prev) => prev.map((t) => t._id === p._id ? { ...t, status: next } : t));
+                            }}
+                            title={p.status === "ACTIVE" ? "Mark Closed" : "Mark Active"}
+                            className={`flex items-center gap-1 font-semibold px-2.5 py-1.5 rounded text-[10px] transition-colors border ${p.status === "ACTIVE" ? "bg-gray-50 hover:bg-gray-100 text-gray-600 border-gray-200" : "bg-green-50 hover:bg-green-100 text-green-600 border-green-200"}`}
+                          >
+                            {p.status === "ACTIVE" ? (
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                            ) : (
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                             )}
-                          </div>
-                          <button onClick={() => handleDelete(p._id)} title="Delete" className="text-gray-400 hover:text-red-500 transition-colors">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" /></svg>
+                            {p.status === "ACTIVE" ? "Close" : "Open"}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(p._id)}
+                            title="Delete"
+                            className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-500 font-semibold px-2.5 py-1.5 rounded text-[10px] transition-colors border border-red-200"
+                          >
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            Del
                           </button>
                         </div>
                       </td>
