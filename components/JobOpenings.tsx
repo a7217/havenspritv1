@@ -5,6 +5,19 @@ import { Job } from "@/lib/models/Job";
 
 type JobRow = { _id: string; title: string; project: string; salaryFull: string; vacancies: number; lastDate: string };
 
+function formatMonthly(salaryFull: string): string {
+  if (!salaryFull) return "—";
+  const amounts = [...salaryFull.matchAll(/(\d+),(\d{2}),(\d{3})/g)];
+  if (amounts.length > 0) {
+    const monthly = amounts.map((m) => Math.round((parseInt(m[1]) * 100000 + parseInt(m[2]) * 1000 + parseInt(m[3])) / 12));
+    const fmt = (n: number) => "₹" + n.toLocaleString("en-IN");
+    return monthly.length >= 2 ? `${fmt(monthly[0])} – ${fmt(monthly[1])}/month` : `${fmt(monthly[0])}/month`;
+  }
+  const lakh = salaryFull.match(/(\d+)\s*(?:lakh|lac|L)/i);
+  if (lakh) return "₹" + Math.round(parseInt(lakh[1]) * 100000 / 12).toLocaleString("en-IN") + "/month";
+  return salaryFull;
+}
+
 async function getLatestJobs(): Promise<JobRow[]> {
   noStore();
   try {
@@ -47,7 +60,7 @@ export default async function JobOpenings() {
                 <h3 className="font-bold text-gray-800 text-base">{job.title}</h3>
                 <p className="text-gray-500 text-xs">{job.project}</p>
                 <div className="mt-2 text-sm text-gray-700 space-y-1">
-                  <p><span className="font-semibold">Salary:</span> {job.salaryFull || "—"}</p>
+                  <p><span className="font-semibold">Salary:</span> {formatMonthly(job.salaryFull || "")}</p>
                   <p><span className="font-semibold">Vacancies:</span> {job.vacancies}</p>
                   <p><span className="font-semibold">Last Date:</span> {job.lastDate || "—"}</p>
                 </div>

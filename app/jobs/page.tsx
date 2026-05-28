@@ -38,9 +38,9 @@ const EXPERIENCE_OPTIONS = [
 
 const SALARY_OPTIONS = [
   { label: "Any Salary", value: "" },
-  { label: "Up to ₹8 LPA", value: "low" },
-  { label: "₹8 – ₹15 LPA", value: "mid" },
-  { label: "₹15 LPA+", value: "high" },
+  { label: "Up to ₹67,000/month", value: "low" },
+  { label: "₹67K – ₹1.25L/month", value: "mid" },
+  { label: "₹1.25L+/month", value: "high" },
 ];
 
 function parseExperienceMin(exp: string): number {
@@ -54,6 +54,21 @@ function parseSalaryLPA(salaryFull: string): number {
   const lakh = salaryFull.match(/(\d+)\s*(?:lakh|lac|L)/i);
   if (lakh) return parseInt(lakh[1]);
   return 0;
+}
+
+function formatMonthly(salaryFull: string): string {
+  if (!salaryFull) return "—";
+  const amounts = [...salaryFull.matchAll(/(\d+),(\d{2}),(\d{3})/g)];
+  if (amounts.length > 0) {
+    const monthly = amounts.map((m) => Math.round((parseInt(m[1]) * 100000 + parseInt(m[2]) * 1000 + parseInt(m[3])) / 12));
+    const fmt = (n: number) => "₹" + n.toLocaleString("en-IN");
+    return monthly.length >= 2
+      ? `${fmt(monthly[0])} – ${fmt(monthly[1])}/month`
+      : `${fmt(monthly[0])}/month`;
+  }
+  const lakh = salaryFull.match(/(\d+)\s*(?:lakh|lac|L)/i);
+  if (lakh) return "₹" + Math.round(parseInt(lakh[1]) * 100000 / 12).toLocaleString("en-IN") + "/month";
+  return salaryFull;
 }
 
 function jobMatchesSalary(job: Job, salaryFilter: string): boolean {
@@ -342,7 +357,7 @@ export default function JobsPage() {
                       <span className="truncate">{job.location}</span>
                     </div>
                     <div className="mt-3 text-xs text-gray-700 space-y-1">
-                      <p><span className="font-semibold">Salary:</span> {job.salary || job.salaryFull || "—"}</p>
+                      <p><span className="font-semibold">Salary:</span> {formatMonthly(job.salaryFull || job.salary || "")}</p>
                       <p><span className="font-semibold">Experience:</span> {job.experience || "—"}</p>
                       <p><span className="font-semibold">Vacancies:</span> {job.vacancies}</p>
                       <p><span className="font-semibold">Last Date:</span> {job.lastDate || "—"}</p>
