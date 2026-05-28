@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 
-const DEPARTMENTS = ["Government", "Environmental", "Communication", "Infrastructure", "Finance", "Administration", "Education", "Healthcare", "IT & Technology", "Construction"];
 const LOCATIONS   = ["Delhi", "Noida", "Mumbai", "Gurgaon", "Hyderabad", "Chennai", "Bangalore", "Pune", "Kolkata", "Ahmedabad", "Jaipur", "Lucknow"];
 
 export default function PostNewJob() {
@@ -17,6 +16,7 @@ export default function PostNewJob() {
   const [tenders, setTenders] = useState<string[]>([
     "NHAI Highway Phase-4", "Metro Line-3", "PWD Project #402",
   ]);
+  const [departments, setDepartments] = useState<string[]>([]);
 
   const [customDept, setCustomDept] = useState("");
   const [customLoc, setCustomLoc] = useState("");
@@ -58,6 +58,16 @@ export default function PostNewJob() {
       .catch(() => {
         setForm((f) => ({ ...f, tender: tenders[0] }));
       });
+    fetch("/api/departments?type=job")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data) && d.data.length > 0) {
+          const names: string[] = d.data.map((dep: { name: string }) => dep.name);
+          setDepartments(names);
+          setForm((f) => ({ ...f, department: names[0] }));
+        }
+      })
+      .catch(() => {});
   }, [router]);
 
   const updateField = (key: string, val: string) => {
@@ -204,7 +214,7 @@ export default function PostNewJob() {
                     }}
                     className={inputCls(errors.department)}
                   >
-                    {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                    {departments.map((d) => <option key={d} value={d}>{d}</option>)}
                     <option value="__custom__">✏️ Other (Custom)</option>
                   </select>
                   {form.department === "__custom__" && (

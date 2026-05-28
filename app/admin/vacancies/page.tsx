@@ -60,6 +60,7 @@ export default function VacanciesManagement() {
   const emptyEdit = { title: "", department: "Government", location: "", salaryFull: "", vacancies: "", lastDate: "", experience: "", shiftTiming: "", qualification: "", description: "" };
   const [editJob,   setEditJob]   = useState<VacancyJob | null>(null);
   const [editForm,  setEditForm]  = useState(emptyEdit);
+  const [departments, setDepartments] = useState<string[]>([]);
   const [editError, setEditError] = useState("");
   const [saving,    setSaving]    = useState(false);
 
@@ -135,6 +136,14 @@ export default function VacanciesManagement() {
   useEffect(() => {
     if (!localStorage.getItem("adminAuth")) { router.push("/admin/login"); return; }
     fetchJobs();
+    fetch("/api/departments?type=job")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) {
+          setDepartments(d.data.map((dep: { name: string }) => dep.name));
+        }
+      })
+      .catch(() => {});
   }, [router, fetchJobs]);
 
   const filtered = useMemo(() => {
@@ -216,7 +225,7 @@ export default function VacanciesManagement() {
               <div>
                 <label className="block text-[11px] font-semibold text-gray-500 mb-1">Department</label>
                 <select value={editForm.department} onChange={(e) => setEditForm((f) => ({ ...f, department: e.target.value }))} className={efCls}>
-                  {["Government","Education","Environmental","Communication","Infrastructure","Finance","Other"].map((d) => <option key={d}>{d}</option>)}
+                  {(departments.length > 0 ? departments : ["Government","Education","Environmental","Communication","Infrastructure","Finance","Other"]).map((d) => <option key={d}>{d}</option>)}
                 </select>
               </div>
               <div>
@@ -290,11 +299,9 @@ export default function VacanciesManagement() {
                   <select value={pendingDept} onChange={(e) => setPendingDept(e.target.value)}
                     className="w-full border border-gray-300 rounded px-3 py-2 text-xs focus:outline-none focus:border-[#f59e0b] appearance-none bg-white pr-8">
                     <option value="All">All Departments</option>
-                    <option value="Government">Government</option>
-                    <option value="Environmental">Environmental</option>
-                    <option value="Communication">Communication</option>
-                    <option value="Infrastructure">Infrastructure</option>
-                    <option value="Finance">Finance</option>
+                    {(departments.length > 0 ? departments : ["Government","Environmental","Communication","Infrastructure","Finance"]).map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
                   </select>
                   <svg className="w-3 h-3 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" /></svg>
                 </div>

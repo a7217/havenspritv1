@@ -60,6 +60,7 @@ export default function ProjectsTendersManagement() {
   const emptyEditT = { projectName: "", clientDept: "NHAI", tenderRef: "", totalJobs: "", startDate: "", endDate: "", status: "ACTIVE" as Project["status"] };
   const [editProject,  setEditProject]  = useState<Project | null>(null);
   const [editFormT,    setEditFormT]    = useState(emptyEditT);
+  const [tenderDepts,  setTenderDepts]  = useState<string[]>([]);
   const [editCustomDept, setEditCustomDept] = useState("");
   const [editErrorT,   setEditErrorT]   = useState("");
   const [savingT,      setSavingT]      = useState(false);
@@ -134,6 +135,14 @@ export default function ProjectsTendersManagement() {
   useEffect(() => {
     if (!localStorage.getItem("adminAuth")) { router.push("/admin/login"); return; }
     fetchData();
+    fetch("/api/departments?type=tender")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) {
+          setTenderDepts(d.data.map((dep: { name: string }) => dep.name));
+        }
+      })
+      .catch(() => {});
   }, [router, fetchData]);
 
   const filtered = useMemo(() => {
@@ -263,7 +272,7 @@ export default function ProjectsTendersManagement() {
               <div>
                 <label className="block text-[11px] font-semibold text-gray-500 mb-1">Client Department</label>
                 <select value={editFormT.clientDept} onChange={(e) => { setEditFormT((f) => ({ ...f, clientDept: e.target.value })); if (e.target.value !== "__custom__") setEditCustomDept(""); }} className={efCls}>
-                  {["NHAI","PWD","Metro","CPWD","Railways","MES","DMRC"].map((d) => <option key={d}>{d}</option>)}
+                  {(tenderDepts.length > 0 ? tenderDepts : ["NHAI","PWD","Metro","CPWD","Railways","MES","DMRC"]).map((d) => <option key={d}>{d}</option>)}
                   <option value="__custom__">✏️ Other (Custom)</option>
                 </select>
                 {editFormT.clientDept === "__custom__" && (
@@ -342,13 +351,9 @@ export default function ProjectsTendersManagement() {
                     }}
                     className={inputCls}
                   >
-                    <option value="NHAI">NHAI</option>
-                    <option value="PWD">PWD</option>
-                    <option value="Metro">Metro</option>
-                    <option value="CPWD">CPWD</option>
-                    <option value="Railways">Railways</option>
-                    <option value="MES">MES</option>
-                    <option value="DMRC">DMRC</option>
+                    {(tenderDepts.length > 0 ? tenderDepts : ["NHAI","PWD","Metro","CPWD","Railways","MES","DMRC"]).map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
                     <option value="__custom__">✏️ Other (Custom)</option>
                   </select>
                   {newProject.clientDept === "__custom__" && (
@@ -411,9 +416,9 @@ export default function ProjectsTendersManagement() {
                   <select value={pendingDept} onChange={(e) => setPendingDept(e.target.value)}
                     className={`${inputCls} appearance-none pr-8`}>
                     <option value="All">All Departments</option>
-                    <option value="PWD">PWD</option>
-                    <option value="NHAI">NHAI</option>
-                    <option value="Metro">Metro</option>
+                    {(tenderDepts.length > 0 ? tenderDepts : ["NHAI","PWD","Metro","CPWD","Railways","MES","DMRC"]).map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
                   </select>
                   <svg className="w-3 h-3 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="currentColor" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" /></svg>
                 </div>
