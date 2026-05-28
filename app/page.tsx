@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import TrustBar from "@/components/TrustBar";
 import JobOpenings from "@/components/JobOpenings";
+import HowToApply from "@/components/HowToApply";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import Stats from "@/components/Stats";
 import ContactFooter from "@/components/ContactFooter";
@@ -24,7 +26,9 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100">
       <Navbar />
       <HeroSection />
+      <TrustBar />
       <JobOpenings />
+      <HowToApply />
       <WhyChooseUs />
       <Stats />
       <ContactFooter />
