@@ -88,6 +88,7 @@ export default function JobsPage() {
   const [location, setLocation] = useState("");
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
   const [selectedExpOptions, setSelectedExpOptions] = useState<number[]>([]);
   const [salaryFilter, setSalaryFilter] = useState("");
   const [page, setPage] = useState(1);
@@ -100,7 +101,19 @@ export default function JobsPage() {
   useEffect(() => {
     fetch("/api/jobs/public")
       .then((r) => r.json())
-      .then((d) => { if (d.success) setJobs(d.data); })
+      .then((d) => {
+        if (d.success) {
+          setJobs(d.data);
+          const unique = Array.from(
+            new Set<string>(
+              d.data
+                .map((j: Job) => j.location?.trim())
+                .filter((l: string) => !!l)
+            )
+          ).sort() as string[];
+          setLocations(unique);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -289,10 +302,9 @@ export default function JobsPage() {
               onChange={(e) => { setLocation(e.target.value); setPage(1); }}
             >
               <option value="">All Locations</option>
-              <option value="Bihar">Bihar</option>
-              <option value="Patna">Patna</option>
-              <option value="Delhi">Delhi</option>
-              <option value="Mumbai">Mumbai</option>
+              {locations.map((loc) => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
             </select>
             <select
               className="bg-white text-gray-600 px-3 py-3 rounded-lg outline-none w-full"
