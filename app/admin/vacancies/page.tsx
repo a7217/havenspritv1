@@ -6,14 +6,6 @@ import AdminHeader from "@/components/admin/AdminHeader";
 
 function formatMonthly(salaryFull: string): string {
   if (!salaryFull) return "—";
-  const amounts = [...salaryFull.matchAll(/(\d+),(\d{2}),(\d{3})/g)];
-  if (amounts.length > 0) {
-    const monthly = amounts.map((m) => Math.round((parseInt(m[1]) * 100000 + parseInt(m[2]) * 1000 + parseInt(m[3])) / 12));
-    const fmt = (n: number) => "₹" + n.toLocaleString("en-IN");
-    return monthly.length >= 2 ? `${fmt(monthly[0])} – ${fmt(monthly[1])}/month` : `${fmt(monthly[0])}/month`;
-  }
-  const lakh = salaryFull.match(/(\d+)\s*(?:lakh|lac|L)/i);
-  if (lakh) return "₹" + Math.round(parseInt(lakh[1]) * 100000 / 12).toLocaleString("en-IN") + "/month";
   return salaryFull;
 }
 
@@ -233,8 +225,8 @@ export default function VacanciesManagement() {
                 <input value={editForm.location} onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))} className={efCls} placeholder="e.g. Patna, Bihar" />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Salary Range (Annual)</label>
-                <input value={editForm.salaryFull} onChange={(e) => setEditForm((f) => ({ ...f, salaryFull: e.target.value }))} className={efCls} placeholder="e.g. INR 12,00,000 - 18,00,000" />
+                <label className="block text-[11px] font-semibold text-gray-500 mb-1">Salary (Monthly)</label>
+                <input value={editForm.salaryFull} onChange={(e) => setEditForm((f) => ({ ...f, salaryFull: e.target.value }))} className={efCls} placeholder="e.g. ₹25,000 - ₹40,000/month" />
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-gray-500 mb-1">Total Vacancies</label>

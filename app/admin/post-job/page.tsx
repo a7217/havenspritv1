@@ -268,8 +268,8 @@ export default function PostNewJob() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
               <h2 className="font-bold text-[#1a2744] text-sm uppercase tracking-wide mb-4 pb-2 border-b border-gray-100">Job Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Field label="Salary Range *" error={errors.salaryFull}>
-                  <input type="text" placeholder="e.g. INR 12,00,000 - 18,00,000 (Annual)" value={form.salaryFull}
+                <Field label="Salary (Monthly) *" error={errors.salaryFull}>
+                  <input type="text" placeholder="e.g. ₹25,000 - ₹40,000/month" value={form.salaryFull}
                     onChange={(e) => updateField("salaryFull", e.target.value)} className={inputCls(errors.salaryFull)} />
                 </Field>
                 <Field label="Experience Required *" error={errors.experience}>
